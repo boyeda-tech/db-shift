@@ -627,8 +627,10 @@ function renderInterim(){
 
   var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">';
   html+=wnav();
-  html+='<div style="display:flex;gap:8px"><button class="nv" onclick="addLigneInterim()">+ Ajouter une ligne</button>';
-  html+='<button class="pub" onclick="printInterim()">Exporter PDF agence</button></div></div>';
+  html+='<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="nv" onclick="addLigneInterim()">+ Ajouter une ligne</button>';
+  html+='<button class="pub" onclick="printInterim()">Exporter PDF agence</button>';
+  html+='<button onclick="printBonCommande()" style="background:#F5A623;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;color:#fff;font-family:inherit">&#x1F4CB; Bon de commande</button>';
+  html+='</div></div>';
   html+='<div style="font-size:12px;color:var(--mu);margin-bottom:1rem">Saisie manuelle des int\u00e9rimaires. Tarifs HT. TVA 20% calcul\u00e9e automatiquement.</div>';
 
   html+='<div class="tw"><table style="width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;border:1px solid var(--bd);min-width:950px">';
@@ -1160,6 +1162,77 @@ function printPaie(){
   win.document.write('</body></html>');
   win.document.close();
   setTimeout(function(){win.print();},500);
+}
+
+function printBonCommande(){
+  var wk=W();
+  if(!S.interim[wk]||!S.interim[wk].lignes||!S.interim[wk].lignes.length){
+    alert('Aucune ligne à exporter.');return;
+  }
+  var lignes=S.interim[wk].lignes;
+  var win=window.open('','_blank','width=1100,height=750');
+  var now=new Date();
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Bon de commande</title><style>');
+  win.document.write('@page{size:A4 landscape;margin:1cm}');
+  win.document.write('*{box-sizing:border-box;margin:0;padding:0}');
+  win.document.write('body{font-family:Helvetica,Arial,sans-serif;color:#1a1a18;font-size:12px;background:#fff}');
+  win.document.write('.page-hdr{background:#F5A623;border-radius:10px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}');
+  win.document.write('.hdr-left .title{font-size:26px;font-weight:900;color:#fff;letter-spacing:1px;text-transform:uppercase}');
+  win.document.write('.hdr-left .subtitle{font-size:14px;font-weight:600;color:rgba(255,255,255,.85);margin-top:4px}');
+  win.document.write('.hdr-right{text-align:right;color:rgba(255,255,255,.9);font-size:12px;line-height:1.7}');
+  win.document.write('.hdr-right strong{font-size:14px;display:block}');
+  win.document.write('.meta{display:flex;gap:30px;margin-bottom:18px;font-size:11px;color:#555;border-left:4px solid #F5A623;padding-left:12px}');
+  win.document.write('.meta span{display:flex;flex-direction:column;gap:2px}');
+  win.document.write('.meta strong{font-size:13px;color:#1a1a18}');
+  win.document.write('table{width:100%;border-collapse:collapse}');
+  win.document.write('thead th{background:#F5A623;color:#fff;padding:10px 10px;text-align:left;font-size:11px;font-weight:700;border-right:2px solid rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.4px}');
+  win.document.write('thead th:last-child{border-right:none;min-width:110px}');
+  win.document.write('tbody td{padding:11px 10px;border-bottom:1px solid #ede9df;border-right:1px solid #ede9df;font-size:12px;vertical-align:middle}');
+  win.document.write('tbody td:last-child{border-right:none;background:#FFFBF2}');
+  win.document.write('tbody tr:nth-child(even) td{background:#FDF8EE}tbody tr:nth-child(even) td:last-child{background:#FFF7E0}');
+  win.document.write('tbody td.obs{min-width:110px;height:40px}');
+  win.document.write('.footer{margin-top:36px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:30px}');
+  win.document.write('.sig-box{border:2px solid #e0d5c0;border-radius:8px;padding:14px 16px;min-height:90px}');
+  win.document.write('.sig-label{font-size:10px;font-weight:700;text-transform:uppercase;color:#F5A623;letter-spacing:.5px;margin-bottom:8px}');
+  win.document.write('.sig-line{border-bottom:1px solid #ccc;margin-top:30px}');
+  win.document.write('@media print{@page{size:A4 landscape;margin:1cm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-p{display:none}}');
+  win.document.write('</style></head><body>');
+
+  win.document.write('<div class="page-hdr">');
+  win.document.write('<div class="hdr-left"><div class="title">Bon de commande Intérim</div><div class="subtitle">David Boyer Traiteur</div></div>');
+  win.document.write('<div class="hdr-right"><strong>David Boyer Traiteur</strong><span>'+wlbl(S.wo)+'</span><span>Fait le '+now.toLocaleDateString('fr-FR')+'</span></div>');
+  win.document.write('</div>');
+
+  win.document.write('<table><thead><tr>');
+  win.document.write('<th>Nom demandé</th><th>Poste</th><th>Prestation</th><th>Date</th><th>Heure arrivée prévue</th><th>Heure départ prévu</th><th>Observations</th>');
+  win.document.write('</tr></thead><tbody>');
+
+  for(var i=0;i<lignes.length;i++){
+    var l=lignes[i];
+    var dateStr=l.date?new Date(l.date).toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}):'&mdash;';
+    var posteLabel=l.poste==='autre'?(l.poste_custom||'Autre'):l.poste||'&mdash;';
+    win.document.write('<tr>');
+    win.document.write('<td style="font-weight:700">'+(l.nom||'&mdash;')+'</td>');
+    win.document.write('<td>'+posteLabel+'</td>');
+    win.document.write('<td>'+(l.prestation||'&mdash;')+'</td>');
+    win.document.write('<td>'+dateStr+'</td>');
+    win.document.write('<td style="text-align:center;font-weight:600">'+(l.arrive||'&mdash;')+'</td>');
+    win.document.write('<td style="text-align:center;font-weight:600">'+(l.depart||'&mdash;')+'</td>');
+    win.document.write('<td class="obs"></td>');
+    win.document.write('</tr>');
+  }
+
+  win.document.write('</tbody></table>');
+
+  win.document.write('<div class="footer">');
+  win.document.write('<div class="sig-box"><div class="sig-label">Cachet de l’agence</div><div class="sig-line"></div></div>');
+  win.document.write('<div class="sig-box"><div class="sig-label">Signature agence</div><div class="sig-line"></div></div>');
+  win.document.write('<div class="sig-box"><div class="sig-label">Signature employeur (David Boyer)</div><div class="sig-line"></div></div>');
+  win.document.write('</div>');
+
+  win.document.write('</body></html>');
+  win.document.close();
+  setTimeout(function(){win.print();},400);
 }
 
 function printInterim(){

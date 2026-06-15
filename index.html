@@ -193,7 +193,7 @@ var S={
     {id:'7',p:'Heloise',t:'CDI',h:30,deb:'2024-01-01',fin:'',tel:'',mdp:'',email:'',chef:false,interim:false},
     {id:'8',p:'Lucile',t:'CDI',h:35,deb:'2024-01-01',fin:'',tel:'',mdp:'',email:'',chef:false,interim:false}
   ],
-  plan:{},ptg:{},extra:[],interim:{},
+  plan:{},ptg:{},extra:[],interim:{},archives:[],
   cfg:{sid:'',tid:'',key:'',mdpManager:'Escoffier79@'},
   fb:{apiKey:'',projectId:''},
   editEmp:null,newSlotShow:false,newSlot:{d:'08h00',f:'17h00',midi:1,soir:0},
@@ -210,6 +210,7 @@ function loadLS(){
   try{var v=localStorage.getItem('dbs-c');if(v)S.cfg=JSON.parse(v);}catch(e){}
   try{var v=localStorage.getItem('dbs-fb');if(v)S.fb=JSON.parse(v);}catch(e){}
   try{var v=localStorage.getItem('dbs-i');if(v)S.interim=JSON.parse(v);}catch(e){}
+  try{var v=localStorage.getItem('dbs-ar');if(v)S.archives=JSON.parse(v);}catch(e){}
 }
 loadLS();
 // Charger depuis Supabase au démarrage
@@ -224,12 +225,14 @@ function saveAll(){
     localStorage.setItem('dbs-c',JSON.stringify(S.cfg));
     localStorage.setItem('dbs-fb',JSON.stringify(S.fb));
     localStorage.setItem('dbs-i',JSON.stringify(S.interim));
+    localStorage.setItem('dbs-ar',JSON.stringify(S.archives));
   }catch(e){}
   // Sync Supabase
   supaSet('employees',{emp:S.emp});
   supaSet('plan',{plan:S.plan});
   supaSet('ptg',{ptg:S.ptg});
   supaSet('config',{cfg:S.cfg,extra:S.extra,interim:S.interim});
+  supaSet('archives',{archives:S.archives});
 }
 
 async function loadFromSupabase(){
@@ -246,6 +249,8 @@ async function loadFromSupabase(){
       if(cfg.extra)S.extra=cfg.extra;
       if(cfg.interim)S.interim=cfg.interim;
     }
+    var arch=await supaGet('archives');
+    if(arch&&arch.archives)S.archives=arch.archives;
     setSyncDot('ok');
     render();
   }catch(e){setSyncDot('err');}
@@ -714,6 +719,54 @@ function renderInterim(){
   html+='<tr style="background:var(--navy)"><td colspan="8" style="padding:10px 12px;font-weight:700;font-size:13px;color:#4CAF50;text-align:right">TOTAL TTC</td>';
   html+='<td style="padding:10px 8px;text-align:center;font-weight:700;font-size:15px;color:#4CAF50">'+(ttc>0?ttc.toFixed(2).replace('.',',')+'&nbsp;\u20ac':'&#x2014;')+'</td><td></td></tr>';
   html+='</tbody></table></div>';
+
+  // ── ARCHIVES ─────────────────────────────────────────────────
+  var archives=S.archives||[];
+  var commandes=archives.filter(function(a){return a.type==='commande';});
+  var facturations=archives.filter(function(a){return a.type==='facturation';});
+
+  html+='<div style="margin-top:2rem">';
+  html+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px">Archives</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">';
+
+  // Colonne Bons de commande
+  html+='<div style="background:#FEF3E2;border:1px solid #F5A623;border-radius:10px;padding:1rem">';
+  html+='<div style="font-weight:700;font-size:12px;color:#7a4f00;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">&#x1F4CB; Bons de commande</div>';
+  if(!commandes.length){
+    html+='<div style="font-size:12px;color:#bbb;padding:8px 0">Aucun bon archivé</div>';
+  } else {
+    for(var ci=commandes.length-1;ci>=0;ci--){
+      var ac=commandes[ci];
+      var acd=new Date(ac.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      html+='<div style="background:#fff;border-radius:7px;padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px">';
+      html+='<div><div style="font-size:12px;font-weight:600;color:var(--navy)">'+esc(ac.semaine)+'</div>';
+      html+='<div style="font-size:10px;color:var(--mu)">'+acd+' &mdash; '+ac.lignes.length+' ligne'+(ac.lignes.length>1?'s':'')+'</div></div>';
+      html+='<button onclick="rePrintArchive(\''+ac.id+'\')" style="background:#F5A623;border:none;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap">&#x1F5A8; Ré-imprimer</button>';
+      html+='</div>';
+    }
+  }
+  html+='</div>';
+
+  // Colonne Facturations
+  html+='<div style="background:#eef1f9;border:1px solid #a0aecf;border-radius:10px;padding:1rem">';
+  html+='<div style="font-weight:700;font-size:12px;color:#0D1838;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">&#x1F9FE; Facturations</div>';
+  if(!facturations.length){
+    html+='<div style="font-size:12px;color:#bbb;padding:8px 0">Aucune facturation archivée</div>';
+  } else {
+    for(var fi=facturations.length-1;fi>=0;fi--){
+      var af=facturations[fi];
+      var afd=new Date(af.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      html+='<div style="background:#fff;border-radius:7px;padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px">';
+      html+='<div><div style="font-size:12px;font-weight:600;color:var(--navy)">'+esc(af.semaine)+'</div>';
+      html+='<div style="font-size:10px;color:var(--mu)">'+afd+' &mdash; '+af.lignes.length+' ligne'+(af.lignes.length>1?'s':'')+(af.total_eur?'&ensp;<strong style="color:#27500A">'+af.total_eur.toFixed(2).replace('.',',')+'&nbsp;€ HT</strong>':'')+'</div></div>';
+      html+='<button onclick="rePrintArchive(\''+af.id+'\')" style="background:var(--navy);border:none;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--gold);cursor:pointer;font-family:inherit;white-space:nowrap">&#x1F5A8; Ré-imprimer</button>';
+      html+='</div>';
+    }
+  }
+  html+='</div>';
+
+  html+='</div></div>'; // grid + section
+
   return html;
 }
 
@@ -1166,14 +1219,27 @@ function printPaie(){
   setTimeout(function(){win.print();},500);
 }
 
-function printBonCommande(){
+function rePrintArchive(id){
+  var a=(S.archives||[]).filter(function(x){return x.id===id;})[0];
+  if(!a)return;
+  if(a.type==='commande')printBonCommande(a);else printInterim(a);
+}
+
+function printBonCommande(archData){
   var wk=W();
-  if(!S.interim[wk]||!S.interim[wk].lignes||!S.interim[wk].lignes.length){
-    alert('Aucune ligne à exporter.');return;
+  var lignes,semLabel,now;
+  if(archData){
+    lignes=archData.lignes;semLabel=archData.semaine;now=new Date(archData.date);
+  } else {
+    if(!S.interim[wk]||!S.interim[wk].lignes||!S.interim[wk].lignes.length){alert('Aucune ligne à exporter.');return;}
+    lignes=S.interim[wk].lignes;semLabel=wlbl(S.wo);now=new Date();
+    if(!S.archives)S.archives=[];
+    S.archives.push({id:String(Date.now()),type:'commande',date:now.toISOString(),semaine:semLabel,lignes:JSON.parse(JSON.stringify(lignes))});
+    supaSet('archives',{archives:S.archives});
+    try{localStorage.setItem('dbs-ar',JSON.stringify(S.archives));}catch(e){}
+    render();
   }
-  var lignes=S.interim[wk].lignes;
   var win=window.open('','_blank','width=1100,height=750');
-  var now=new Date();
   win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Bon de commande</title><style>');
   win.document.write('@page{size:A4 landscape;margin:1cm}');
   win.document.write('*{box-sizing:border-box;margin:0;padding:0}');
@@ -1198,7 +1264,7 @@ function printBonCommande(){
 
   win.document.write('<div class="page-hdr">');
   win.document.write('<div class="hdr-left"><div class="title">Bon de commande Intérim</div><div class="subtitle">David Boyer Traiteur</div></div>');
-  win.document.write('<div class="hdr-right"><strong>David Boyer Traiteur</strong><span>'+wlbl(S.wo)+'</span><span>Fait le '+now.toLocaleDateString('fr-FR')+'</span></div>');
+  win.document.write('<div class="hdr-right"><strong>David Boyer Traiteur</strong><span>'+semLabel+'</span><span>Fait le '+now.toLocaleDateString('fr-FR')+'</span></div>');
   win.document.write('</div>');
 
   win.document.write('<table><thead><tr>');
@@ -1227,14 +1293,29 @@ function printBonCommande(){
   setTimeout(function(){win.print();},400);
 }
 
-function printInterim(){
+function printInterim(archData){
   var wk=W();
-  if(!S.interim[wk]||!S.interim[wk].lignes||!S.interim[wk].lignes.length){
-    alert('Aucune ligne \u00e0 exporter.');return;
+  var lignes,semLabel,now,total_h=0,total_eur=0;
+  if(archData){
+    lignes=archData.lignes;semLabel=archData.semaine;now=new Date(archData.date);
+    total_h=archData.total_h||0;total_eur=archData.total_eur||0;
+  } else {
+    if(!S.interim[wk]||!S.interim[wk].lignes||!S.interim[wk].lignes.length){alert('Aucune ligne \u00e0 exporter.');return;}
+    lignes=S.interim[wk].lignes;semLabel=wlbl(S.wo);now=new Date();
+    for(var j=0;j<lignes.length;j++){
+      var lj=lignes[j],tAj=toMin(lj.arrive),tDj=toMin(lj.depart);
+      if(tDj<=tAj)tDj+=24*60;
+      var hj=Math.max(0,(tDj-tAj)/60-(parseFloat(lj.pause)||0));
+      var tj=parseFloat(lj.tarif==='custom'?lj.tarif_custom:lj.tarif)||0;
+      total_h+=hj;total_eur+=hj*tj;
+    }
+    if(!S.archives)S.archives=[];
+    S.archives.push({id:String(Date.now()),type:'facturation',date:now.toISOString(),semaine:semLabel,lignes:JSON.parse(JSON.stringify(lignes)),total_h:total_h,total_eur:total_eur});
+    supaSet('archives',{archives:S.archives});
+    try{localStorage.setItem('dbs-ar',JSON.stringify(S.archives));}catch(e){}
+    render();
   }
-  var lignes=S.interim[wk].lignes;
   var win=window.open('','_blank','width=1000,height=700');
-  var now=new Date(),total_h=0,total_eur=0;
   win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Int\u00e9rim</title><style>');
   win.document.write('@page{size:A4 landscape;margin:1cm}body{font-family:Helvetica,Arial,sans-serif;color:#1a1a18;font-size:12px}');
   win.document.write('.hdr{background:#0D1838;border-radius:8px;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}');
@@ -1250,7 +1331,7 @@ function printInterim(){
   win.document.write('.footer{margin-top:40px;display:flex;justify-content:space-between;font-size:11px;color:#888;border-top:1px solid #e2e0da;padding-top:10px}');
   win.document.write('@media print{@page{margin:1.5cm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}');
   win.document.write('</style></head><body>');
-  win.document.write('<div class="hdr"><div><div style="font-size:18px;font-weight:700;color:#C4A050">R\u00e9capitulatif Int\u00e9rim</div><div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:3px">'+wlbl(S.wo)+'</div></div><div style="text-align:right;color:rgba(255,255,255,.8)"><div>David Boyer Traiteur</div><div style="font-size:10px;opacity:.6">'+now.toLocaleDateString('fr-FR')+'</div></div></div>');
+  win.document.write('<div class="hdr"><div><div style="font-size:18px;font-weight:700;color:#C4A050">R\u00e9capitulatif Int\u00e9rim</div><div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:3px">'+semLabel+'</div></div><div style="text-align:right;color:rgba(255,255,255,.8)"><div>David Boyer Traiteur</div><div style="font-size:10px;opacity:.6">'+now.toLocaleDateString('fr-FR')+'</div></div></div>');
   win.document.write('<table><thead><tr><th>Nom</th><th>Prestation</th><th>Poste</th><th>Date</th><th>Arriv\u00e9e</th><th>D\u00e9part</th><th>Pause</th><th>H. nettes</th><th>Tarif HT/h</th><th>Total HT</th></tr></thead><tbody>');
   for(var i=0;i<lignes.length;i++){
     var l=lignes[i];

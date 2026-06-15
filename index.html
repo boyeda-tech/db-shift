@@ -641,6 +641,7 @@ function renderInterim(){
   html+='<th style="padding:10px 8px;text-align:center;font-size:11px;font-weight:600;color:rgba(255,255,255,.7);border-right:1px solid rgba(255,255,255,.1)">Date</th>';
   html+='<th style="padding:10px 8px;text-align:center;font-size:11px;font-weight:600;color:rgba(255,255,255,.7);border-right:1px solid rgba(255,255,255,.1)">Arriv\u00e9e</th>';
   html+='<th style="padding:10px 8px;text-align:center;font-size:11px;font-weight:600;color:rgba(255,255,255,.7);border-right:1px solid rgba(255,255,255,.1)">D\u00e9part</th>';
+  html+='<th style="padding:10px 8px;text-align:center;font-size:11px;font-weight:600;color:rgba(255,255,255,.7);border-right:1px solid rgba(255,255,255,.1)">Observations</th>';
   html+='<th style="padding:10px 8px;text-align:center;font-size:11px;font-weight:600;color:rgba(255,255,255,.7);border-right:1px solid rgba(255,255,255,.1)">Pause repas</th>';
   html+='<th style="padding:10px 8px;text-align:center;font-size:11px;font-weight:600;color:var(--gold);border-right:1px solid rgba(255,255,255,.1)">H. nettes</th>';
   html+='<th style="padding:10px 8px;text-align:center;font-size:11px;font-weight:600;color:rgba(255,255,255,.7);border-right:1px solid rgba(255,255,255,.1)">Tarif HT/h</th>';
@@ -677,6 +678,7 @@ function renderInterim(){
     html+='<td style="padding:7px 6px;text-align:center"><input type="date" value="'+(l.date||'')+'" style="border:1px solid var(--bd);border-radius:5px;padding:4px 5px;font-size:11px;font-family:inherit;width:120px" onchange="updLI('+i+',\'date\',this.value)"/></td>';
     html+='<td style="padding:7px 6px;text-align:center"><input type="time" value="'+(l.arrive||'')+'" style="border:1px solid var(--bd);border-radius:5px;padding:4px 5px;font-size:11px;font-family:inherit;width:82px" onchange="updLI('+i+',\'arrive\',this.value)"/></td>';
     html+='<td style="padding:7px 6px;text-align:center"><input type="time" value="'+(l.depart||'')+'" style="border:1px solid var(--bd);border-radius:5px;padding:4px 5px;font-size:11px;font-family:inherit;width:82px" onchange="updLI('+i+',\'depart\',this.value)"/></td>';
+    html+='<td style="padding:7px 6px"><input class="iinput" type="text" value="'+esc(l.observations||'')+'" placeholder="Observations…" onchange="updLI('+i+',\'observations\',this.value)"/></td>';
     html+='<td style="padding:7px 6px;text-align:center"><select class="isel" onchange="updLI('+i+',\'pause\',this.value)">';
     html+='<option value="0"'+(!l.pause||l.pause==='0'?' selected':'')+'>Pas de pause</option>';
     html+='<option value="0.5"'+(l.pause==='0.5'?' selected':'')+'>30 min</option>';
@@ -1078,7 +1080,7 @@ function addLigneInterim(){
   var wk=W();
   if(!S.interim[wk])S.interim[wk]={lignes:[]};
   if(!S.interim[wk].lignes)S.interim[wk].lignes=[];
-  S.interim[wk].lignes.push({nom:'',poste:'',date:'',arrive:'',depart:'',pause:'0',tarif:'20.68',tarif_custom:''});
+  S.interim[wk].lignes.push({nom:'',poste:'',date:'',arrive:'',depart:'',observations:'',pause:'0',tarif:'20.68',tarif_custom:''});
   saveAll();render();
 }
 function delLI(idx){var wk=W();S.interim[wk].lignes.splice(idx,1);saveAll();render();}
@@ -1191,10 +1193,6 @@ function printBonCommande(){
   win.document.write('tbody td:last-child{border-right:none;background:#FFFBF2}');
   win.document.write('tbody tr:nth-child(even) td{background:#FDF8EE}tbody tr:nth-child(even) td:last-child{background:#FFF7E0}');
   win.document.write('tbody td.obs{min-width:110px;height:40px}');
-  win.document.write('.footer{margin-top:36px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:30px}');
-  win.document.write('.sig-box{border:2px solid #e0d5c0;border-radius:8px;padding:14px 16px;min-height:90px}');
-  win.document.write('.sig-label{font-size:10px;font-weight:700;text-transform:uppercase;color:#F5A623;letter-spacing:.5px;margin-bottom:8px}');
-  win.document.write('.sig-line{border-bottom:1px solid #ccc;margin-top:30px}');
   win.document.write('@media print{@page{size:A4 landscape;margin:1cm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-p{display:none}}');
   win.document.write('</style></head><body>');
 
@@ -1218,19 +1216,13 @@ function printBonCommande(){
     win.document.write('<td>'+dateStr+'</td>');
     win.document.write('<td style="text-align:center;font-weight:600">'+(l.arrive||'&mdash;')+'</td>');
     win.document.write('<td style="text-align:center;font-weight:600">'+(l.depart||'&mdash;')+'</td>');
-    win.document.write('<td class="obs"></td>');
+    win.document.write('<td class="obs">'+(l.observations||'')+'</td>');
     win.document.write('</tr>');
   }
 
-  win.document.write('</tbody></table>');
+  win.document.write(‘</tbody></table>’);
 
-  win.document.write('<div class="footer">');
-  win.document.write('<div class="sig-box"><div class="sig-label">Cachet de l’agence</div><div class="sig-line"></div></div>');
-  win.document.write('<div class="sig-box"><div class="sig-label">Signature agence</div><div class="sig-line"></div></div>');
-  win.document.write('<div class="sig-box"><div class="sig-label">Signature employeur (David Boyer)</div><div class="sig-line"></div></div>');
-  win.document.write('</div>');
-
-  win.document.write('</body></html>');
+  win.document.write(‘</body></html>’);
   win.document.close();
   setTimeout(function(){win.print();},400);
 }

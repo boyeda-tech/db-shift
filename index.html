@@ -113,6 +113,7 @@ table.pdft tr:last-child td{border-bottom:none}
     <div style="color:rgba(255,255,255,.5);font-size:11px">Traiteur</div>
   </div>
   <div id="syncDot" class="sync-dot" title="Supabase" style="width:8px;height:8px;border-radius:50%;background:#888;margin-left:auto;flex-shrink:0"></div>
+  <div id="hdrExtra"></div>
 </div>
 <div class="nav" id="nav"></div>
 <div class="pad" id="app"></div>
@@ -914,7 +915,63 @@ function renderExport(){
 
 // ── MAIN RENDER ──────────────────────────────────────────────
 var TABS=[['planning','Planning'],['equipe','\u00c9quipe'],['pointage','Pointage'],['recap','R\u00e9cap'],['interim','Int\u00e9rim'],['collab','Vue collab'],['params','Param\u00e8tres'],['export','Export PDF']];
+function renderHome(){
+  return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 62px);padding:2rem">'
+    +'<div style="text-align:center;margin-bottom:2.5rem">'
+    +'<div style="width:56px;height:56px;background:var(--gold);border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:var(--navy);margin:0 auto 14px">DB</div>'
+    +'<div style="font-size:22px;font-weight:700;color:var(--navy);letter-spacing:.3px">DB&#x2013;Shift</div>'
+    +'<div style="color:var(--mu);font-size:13px;margin-top:4px">Gestion des plannings</div>'
+    +'</div>'
+    +'<div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:280px">'
+    +'<button class="ba" onclick="S.mode=\'managerLogin\';S.managerErr=false;S.managerPwd=\'\';render()" style="font-size:15px;padding:15px;border-radius:10px">&#x1F464; Manager</button>'
+    +'<button onclick="enterCollab()" style="background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;color:var(--navy);font-family:inherit">&#x1F465; Collaborateur</button>'
+    +'</div>'
+    +'</div>';
+}
+
+function renderManagerLogin(){
+  return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 62px);padding:2rem">'
+    +'<div style="width:100%;max-width:300px">'
+    +'<div style="background:var(--navy);border-radius:12px 12px 0 0;padding:1.25rem 1.5rem;text-align:center">'
+    +'<div style="color:var(--gold);font-weight:700;font-size:16px">&#x1F511; Accès Manager</div>'
+    +'</div>'
+    +'<div style="background:var(--card);border:1px solid var(--bd);border-top:none;border-radius:0 0 12px 12px;padding:1.5rem">'
+    +(S.managerErr?'<div class="info" style="margin-bottom:12px">Code incorrect. Réessayez.</div>':'')
+    +'<input class="mi" type="password" id="pwdIn" placeholder="Code manager" oninput="S.managerPwd=this.value" onkeydown="if(event.key===\'Enter\')checkManager()" autofocus style="margin-bottom:12px;letter-spacing:6px"/>'
+    +'<button class="ba" onclick="checkManager()" style="margin-bottom:8px;border-radius:8px">Accéder</button>'
+    +'<button class="btn" onclick="S.mode=\'home\';render()" style="width:100%;padding:10px;font-size:13px;border-radius:8px">&#x2190; Retour</button>'
+    +'</div>'
+    +'</div>'
+    +'</div>';
+}
+
 function render(){
+  var hdrExtra=document.getElementById('hdrExtra');
+  if(hdrExtra){
+    if(S.mode==='manager'){
+      hdrExtra.innerHTML='<button onclick="logout()" style="background:rgba(255,255,255,.15);border:none;border-radius:6px;color:rgba(255,255,255,.8);padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit;margin-left:8px">Déconnexion</button>';
+    } else {
+      hdrExtra.innerHTML='';
+    }
+  }
+  if(S.mode==='home'){
+    document.getElementById('nav').innerHTML='';
+    document.getElementById('app').innerHTML=renderHome();
+    return;
+  }
+  if(S.mode==='managerLogin'){
+    document.getElementById('nav').innerHTML='';
+    document.getElementById('app').innerHTML=renderManagerLogin();
+    var pw=document.getElementById('pwdIn');if(pw)pw.focus();
+    return;
+  }
+  if(S.mode==='collab'){
+    document.getElementById('nav').innerHTML='';
+    document.getElementById('app').innerHTML=(S.collabId&&S.collabPwd)?renderCollab():renderCollabSel();
+    var pw=document.getElementById('pwdIn');if(pw)pw.focus();
+    return;
+  }
+  // mode === 'manager'
   var navHtml='';
   for(var i=0;i<TABS.length;i++){var t=TABS[i];navHtml+='<button class="nt'+(S.tab===t[0]?' on':'')+'" onclick="setTab(\''+t[0]+'\')">'+t[1]+'</button>';}
   document.getElementById('nav').innerHTML=navHtml;
@@ -932,9 +989,13 @@ function render(){
 }
 
 // ── ACTIONS ──────────────────────────────────────────────────
-function enterManager(){S.mode='manager';S.managerErr=false;S.managerPwd='';render();}
+function enterManager(){S.mode='managerLogin';S.managerErr=false;S.managerPwd='';render();}
 function checkManager(){
-  if(!S.cfg.mdpManager||S.managerPwd===S.cfg.mdpManager){
+  var inp=document.getElementById('pwdIn');
+  var val=inp?inp.value:S.managerPwd;
+  S.managerPwd=val;
+  var mdp=(S.cfg&&S.cfg.mdpManager)?S.cfg.mdpManager:'Escoffier79@';
+  if(!mdp||val===mdp){
     S.mode='manager';S.managerErr=false;S.managerPwd='';render();
   } else {
     S.managerErr=true;render();

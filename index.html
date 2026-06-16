@@ -255,7 +255,15 @@ async function loadFromSupabase(){
     }
     var arch=await supaGet('archives');
     if(arch&&arch.archives)S.archives=arch.archives;
-    saveAll();
+    try{
+      localStorage.setItem('dbs-e',JSON.stringify(S.emp));
+      localStorage.setItem('dbs-p',JSON.stringify(S.plan));
+      localStorage.setItem('dbs-t',JSON.stringify(S.ptg));
+      localStorage.setItem('dbs-x',JSON.stringify(S.extra));
+      localStorage.setItem('dbs-c',JSON.stringify(S.cfg));
+      localStorage.setItem('dbs-i',JSON.stringify(S.interim));
+      localStorage.setItem('dbs-ar',JSON.stringify(S.archives));
+    }catch(e){}
     setSyncDot('ok');
     render();
   }catch(e){setSyncDot('err');}

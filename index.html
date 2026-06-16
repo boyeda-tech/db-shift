@@ -211,6 +211,10 @@ function loadLS(){
   try{var v=localStorage.getItem('dbs-fb');if(v)S.fb=JSON.parse(v);}catch(e){}
   try{var v=localStorage.getItem('dbs-i');if(v)S.interim=JSON.parse(v);}catch(e){}
   try{var v=localStorage.getItem('dbs-ar');if(v)S.archives=JSON.parse(v);}catch(e){}
+  try{
+    var sess=localStorage.getItem('dbs-session');
+    if(sess){var sv=JSON.parse(sess);if(sv&&sv.mode==='collab'&&sv.collabId){S.collabId=sv.collabId;S.collabPwd=true;S.mode='collab';}}
+  }catch(e){}
 }
 loadLS();
 // Charger depuis Supabase au démarrage
@@ -251,6 +255,7 @@ async function loadFromSupabase(){
     }
     var arch=await supaGet('archives');
     if(arch&&arch.archives)S.archives=arch.archives;
+    saveAll();
     setSyncDot('ok');
     render();
   }catch(e){setSyncDot('err');}
@@ -814,7 +819,10 @@ function renderCollab(){
 
   var hdrHtml='<div style="background:var(--navy);padding:11px 16px;display:flex;align-items:center;justify-content:space-between;margin:-1rem -1rem 1rem">'
     +'<div style="display:flex;align-items:center;gap:10px"><div class="logo">DB</div><div style="color:#fff;font-size:14px;font-weight:700">DB&#x2013;Shift</div></div>'
+    +'<div style="display:flex;gap:8px">'
     +'<button onclick="backCollab()" style="background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit">&#x2190; Retour</button>'
+    +'<button onclick="logoutCollab()" style="background:rgba(180,40,40,.75);border:none;border-radius:6px;color:#fff;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit">Déconnexion</button>'
+    +'</div>'
     +'</div>';
 
   var hasTabs=me.chef||me.interim;
@@ -1100,20 +1108,22 @@ function saveEmp(){
 }
 function delEmp(id){if(confirm('Supprimer ?')){S.emp=S.emp.filter(function(e){return e.id!==id;});saveAll();render();}}
 
+function saveSession(){try{localStorage.setItem('dbs-session',JSON.stringify({collabId:S.collabId,mode:'collab'}));}catch(e){}}
 function tryCollab(id){
   var e=S.emp.filter(function(x){return x.id===id;})[0];
   if(!e)return;
   if(!isActive(e)){alert('Contrat termin\u00e9. Acc\u00e8s d\u00e9sactiv\u00e9.');return;}
   S.collabId=id;S.pwd='';S.pwdErr=false;S.collabViewMode='mon';
-  if(!e.mdp){S.collabPwd=true;render();}else{S.collabPwd=false;render();}
+  if(!e.mdp){S.collabPwd=true;saveSession();render();}else{S.collabPwd=false;render();}
 }
 function checkPwd(){
   var e=S.emp.filter(function(x){return x.id===S.collabId;})[0];
   var inp=document.getElementById('pwdIn');var val=inp?inp.value:S.pwd;
-  if(val===e.mdp){S.collabPwd=true;S.pwdErr=false;render();}else{S.pwdErr=true;render();}
+  if(val===e.mdp){S.collabPwd=true;S.pwdErr=false;saveSession();render();}else{S.pwdErr=true;render();}
 }
 function cancelCollab(){S.collabId=null;S.collabPwd=null;S.pwd='';S.mode='home';render();}
 function backCollab(){S.collabId=null;S.collabPwd=null;S.pwd='';S.mode='home';render();}
+function logoutCollab(){try{localStorage.removeItem('dbs-session');}catch(e){}S.collabId=null;S.collabPwd=null;S.pwd='';S.mode='home';render();}
 function ptgArrive(){setPtgVal(S.collabId,todayDi(),'arrive',nowt());render();}
 function ptgDepart(){setPtgVal(S.collabId,todayDi(),'depart',nowt());render();}
 

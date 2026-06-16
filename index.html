@@ -1268,6 +1268,7 @@ function printBonCommande(archData){
   win.document.write('tbody td.obs{min-width:110px;height:40px}');
   win.document.write('@media print{@page{size:A4 landscape;margin:1cm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-p{display:none}}');
   win.document.write('</style></head><body>');
+  win.document.write('<button class="no-p" onclick="window.close()" style="position:fixed;top:12px;right:12px;background:#333;color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-size:13px;z-index:999;font-family:sans-serif">✕ Fermer cet onglet</button>');
 
   win.document.write('<div class="page-hdr">');
   win.document.write('<div class="hdr-left"><div class="title">Bon de commande Intérim</div><div class="subtitle">David Boyer Traiteur</div></div>');
@@ -1336,8 +1337,9 @@ function printInterim(archData){
   win.document.write('.tva td{background:#f4f2ed!important;color:#888;font-size:11px}');
   win.document.write('.ttc td{background:#EAF3DE!important;color:#27500A!important;font-weight:700;font-size:14px}');
   win.document.write('.footer{margin-top:40px;display:flex;justify-content:space-between;font-size:11px;color:#888;border-top:1px solid #e2e0da;padding-top:10px}');
-  win.document.write('@media print{@page{margin:1.5cm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}');
+  win.document.write('@media print{@page{margin:1.5cm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-p{display:none}}');
   win.document.write('</style></head><body>');
+  win.document.write('<button class="no-p" onclick="window.close()" style="position:fixed;top:12px;right:12px;background:#333;color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-size:13px;z-index:999;font-family:sans-serif">\u2715 Fermer cet onglet</button>');
   win.document.write('<div class="hdr"><div><div style="font-size:18px;font-weight:700;color:#C4A050">R\u00e9capitulatif Int\u00e9rim</div><div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:3px">'+semLabel+'</div></div><div style="text-align:right;color:rgba(255,255,255,.8)"><div>David Boyer Traiteur</div><div style="font-size:10px;opacity:.6">'+now.toLocaleDateString('fr-FR')+'</div></div></div>');
   win.document.write('<table><thead><tr><th>Nom</th><th>Prestation</th><th>Poste</th><th>Date</th><th>Arriv\u00e9e</th><th>D\u00e9part</th><th>Pause</th><th>H. nettes</th><th>Tarif HT/h</th><th>Total HT</th></tr></thead><tbody>');
   for(var i=0;i<lignes.length;i++){

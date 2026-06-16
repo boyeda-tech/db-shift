@@ -726,7 +726,10 @@ function renderInterim(){
   var facturations=archives.filter(function(a){return a.type==='facturation';});
 
   html+='<div style="margin-top:2rem">';
-  html+='<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px">Archives</div>';
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+  html+='<div style="font-size:13px;font-weight:700;color:var(--navy)">Archives</div>';
+  if(S.mode==='manager')html+='<button onclick="clearArchives()" style="background:none;border:1px solid #A32D2D;border-radius:6px;color:#A32D2D;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit">&#x1F5D1; Tout effacer</button>';
+  html+='</div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">';
 
   // Colonne Bons de commande
@@ -741,8 +744,10 @@ function renderInterim(){
       html+='<div style="background:#fff;border-radius:7px;padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px">';
       html+='<div><div style="font-size:12px;font-weight:600;color:var(--navy)">'+esc(ac.semaine)+'</div>';
       html+='<div style="font-size:10px;color:var(--mu)">'+acd+' &mdash; '+ac.lignes.length+' ligne'+(ac.lignes.length>1?'s':'')+'</div></div>';
+      html+='<div style="display:flex;gap:6px;align-items:center">';
       html+='<button onclick="rePrintArchive(\''+ac.id+'\')" style="background:#F5A623;border:none;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap">&#x1F5A8; Ré-imprimer</button>';
-      html+='</div>';
+      if(S.mode==='manager')html+='<button onclick="delArchive(\''+ac.id+'\')" style="background:none;border:none;cursor:pointer;font-size:16px;color:#A32D2D;padding:0 2px;line-height:1" title="Supprimer">&#x1F5D1;</button>';
+      html+='</div></div>';
     }
   }
   html+='</div>';
@@ -759,8 +764,10 @@ function renderInterim(){
       html+='<div style="background:#fff;border-radius:7px;padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px">';
       html+='<div><div style="font-size:12px;font-weight:600;color:var(--navy)">'+esc(af.semaine)+'</div>';
       html+='<div style="font-size:10px;color:var(--mu)">'+afd+' &mdash; '+af.lignes.length+' ligne'+(af.lignes.length>1?'s':'')+(af.total_eur?'&ensp;<strong style="color:#27500A">'+af.total_eur.toFixed(2).replace('.',',')+'&nbsp;€ HT</strong>':'')+'</div></div>';
+      html+='<div style="display:flex;gap:6px;align-items:center">';
       html+='<button onclick="rePrintArchive(\''+af.id+'\')" style="background:var(--navy);border:none;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--gold);cursor:pointer;font-family:inherit;white-space:nowrap">&#x1F5A8; Ré-imprimer</button>';
-      html+='</div>';
+      if(S.mode==='manager')html+='<button onclick="delArchive(\''+af.id+'\')" style="background:none;border:none;cursor:pointer;font-size:16px;color:#A32D2D;padding:0 2px;line-height:1" title="Supprimer">&#x1F5D1;</button>';
+      html+='</div></div>';
     }
   }
   html+='</div>';
@@ -1230,6 +1237,19 @@ function rePrintArchive(id){
   var a=(S.archives||[]).filter(function(x){return x.id===id;})[0];
   if(!a)return;
   if(a.type==='commande')printBonCommande(a);else printInterim(a);
+}
+function delArchive(id){
+  S.archives=(S.archives||[]).filter(function(a){return a.id!==id;});
+  try{localStorage.setItem('dbs-ar',JSON.stringify(S.archives));}catch(e){}
+  supaSet('archives',{archives:S.archives});
+  render();
+}
+function clearArchives(){
+  if(!confirm('Effacer toutes les archives ?'))return;
+  S.archives=[];
+  try{localStorage.setItem('dbs-ar',JSON.stringify(S.archives));}catch(e){}
+  supaSet('archives',{archives:S.archives});
+  render();
 }
 
 function printBonCommande(archData){

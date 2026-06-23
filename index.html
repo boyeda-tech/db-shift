@@ -239,8 +239,7 @@ function saveAll(){
   supaSet('employees',{emp:S.emp});
   supaSet('plan',{plan:S.plan});
   supaSet('ptg',{ptg:S.ptg});
-  supaSet('config',{cfg:S.cfg,extra:S.extra,interim:S.interim});
-  supaSet('archives',{archives:S.archives});
+  supaSet('config',{cfg:S.cfg,extra:S.extra,interim:S.interim,archives:S.archives});
 }
 
 async function loadFromSupabase(){
@@ -256,9 +255,8 @@ async function loadFromSupabase(){
       if(cfg.cfg)S.cfg=cfg.cfg;
       if(cfg.extra)S.extra=cfg.extra;
       if(cfg.interim)S.interim=cfg.interim;
+      if(cfg.archives)S.archives=cfg.archives;
     }
-    var arch=await supaGet('archives');
-    if(arch&&arch.archives)S.archives=arch.archives;
     try{
       localStorage.setItem('dbs-e',JSON.stringify(S.emp));
       localStorage.setItem('dbs-p',JSON.stringify(S.plan));

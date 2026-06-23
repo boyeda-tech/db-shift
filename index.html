@@ -876,9 +876,15 @@ function renderCollab(){
   }
 
   // Mon planning
+  var weekNav='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">'
+    +'<button class="btn" onclick="go(-1)" style="padding:3px 10px;font-size:14px">&#x2190;</button>'
+    +'<span style="flex:1;text-align:center;font-size:11px;color:rgba(196,160,80,.7)">'+esc(wlbl(S.wo))+'</span>'
+    +'<button class="btn" onclick="go(1)" style="padding:3px 10px;font-size:14px">&#x2192;</button>'
+    +(S.wo!==0?'<button class="btn" onclick="goToday()" style="font-size:10px;color:#8a6a20;border-color:var(--gold)">Aujourd\'hui</button>':'')
+    +'</div>';
   var rows='';
   for(var i=0;i<7;i++){
-    var day=getDay(me.id,i),lines=plines(day),isT=i===tdi;
+    var day=getDay(me.id,i),lines=plines(day),isT=i===tdi&&S.wo===0;
     rows+='<div class="cwd'+(isT?' today':'')+'">';
     rows+='<div><div style="font-weight:'+(isT?700:500)+';font-size:13px;color:'+(isT?'var(--navy)':'var(--tx)')+'">'+DAYSFULL[i]+' <span style="font-weight:400;font-size:11px;color:var(--mu)">'+fd(days[i])+'</span></div>';
     for(var j=0;j<lines.length;j++)rows+='<div style="font-size:'+(j===0?'12':'11')+'px;color:'+(j===0?'var(--tx)':'var(--mu)')+';margin-top:2px">'+lines[j]+'</div>';
@@ -893,7 +899,7 @@ function renderCollab(){
     ptgBox+='</div>';
   }else{ptgBox='<div class="ptb" style="text-align:center;font-size:13px;color:var(--mu)">Vous n\'&#xEA;tes pas planifi\u00e9 aujourd\'hui.</div>';}
   return hdrHtml+'<div class="cw">'+tabsHtml
-    +'<div class="cwh"><div style="font-size:11px;color:rgba(196,160,80,.7);margin-bottom:3px">'+esc(wlbl(S.wo))+'</div><div style="font-size:18px;font-weight:700;color:var(--gold)">Bonjour '+esc(me.p)+' &#x1F44B;</div></div>'
+    +'<div class="cwh">'+weekNav+'<div style="font-size:18px;font-weight:700;color:var(--gold)">Bonjour '+esc(me.p)+' &#x1F44B;</div></div>'
     +'<div class="cwc">'+rows+'</div>'+ptgBox+'</div>';
 }
 

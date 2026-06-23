@@ -215,7 +215,7 @@ function loadLS(){
     var sess=localStorage.getItem('dbs-session');
     if(sess){var sv=JSON.parse(sess);if(sv&&sv.mode==='collab'&&sv.collabId){
       var _se=S.emp.filter(function(x){return x.id===sv.collabId;})[0];
-      if(_se&&isActive(_se)){S.collabId=sv.collabId;S.collabPwd=true;S.mode='collab';}
+      if(_se&&isActive(_se)){S.collabId=sv.collabId;S.collabPwd=false;S.mode='collab';}
       else{try{localStorage.removeItem('dbs-session');}catch(_){}}
     }}
   }catch(e){}

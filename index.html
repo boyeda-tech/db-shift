@@ -1219,8 +1219,10 @@ function updTarif(idx,val){var wk=W();S.interim[wk].lignes[idx].tarif=val;if(val
 
 function printLandscape(){
   var emp=actEmp(),days=DD();
+  var m=mon(S.wo),dd=('0'+m.getDate()).slice(-2),mm=('0'+(m.getMonth()+1)).slice(-2),yyyy=m.getFullYear();
+  var pdfTitle='Planning_DB-Shift_semaine-'+dd+mm+yyyy;
   var win=window.open('','_blank','width=1200,height=750');
-  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Planning</title><style>');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>'+pdfTitle+'</title><style>');
   win.document.write('@page{size:A4 landscape;margin:10mm}*{box-sizing:border-box;margin:0;padding:0}');
   win.document.write('body{font-family:"Helvetica Neue",Arial,sans-serif;background:#fff;color:#1a1a18;font-size:11px}');
   win.document.write('.hdr{background:#0D1838;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;border-radius:8px}');
@@ -1465,6 +1467,7 @@ async function publier(){
     }catch(err){res.push({n:e.p,ok:false});}
   }
   S.sending=false;S.sendRes=res;render();
+  printLandscape();
 }
 
 render();

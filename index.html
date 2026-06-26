@@ -331,14 +331,21 @@ function getMonthStats(yr,mo,eid,hc){
   var tot={totalH:0,repas:0,cp:0,am:0,ecole:0,recup:0,hSup:0};
   var keys=Object.keys(S.plan);
   for(var i=0;i<keys.length;i++){
-    var wk=keys[i],pts=wk.split('-'),wy=parseInt(pts[0]),wm=parseInt(pts[1])-1;
-    if(wy===yr&&wm===mo){
-      var st=weekStatsW(wk,eid);
-      tot.totalH+=st.totalH;tot.repas+=st.repas;tot.cp+=st.cp;
-      tot.am+=st.am;tot.ecole+=st.ecole;tot.recup+=st.recup;
-      tot.hSup+=st.totalH-hc-(st.recup*8);
+    var wk=keys[i],wkMon=new Date(wk+'T00:00:00');
+    for(var di=0;di<7;di++){
+      var d=new Date(wkMon);d.setDate(wkMon.getDate()+di);
+      if(d.getFullYear()!==yr||d.getMonth()!==mo)continue;
+      var day=getDayW(wk,eid,di),labo=day.labo||'';
+      var ph=prestaH(day.pd,day.pf);
+      if(labo==='CP'){tot.cp++;tot.totalH+=ph;tot.hSup+=ph-hc/7;}
+      else if(labo==='AM'){tot.am++;tot.totalH+=ph;tot.hSup+=ph-hc/7;}
+      else if(labo==='ECOLE'){tot.ecole++;tot.totalH+=ph;tot.hSup+=ph-hc/7;}
+      else if(labo==='RECUP'){tot.recup++;tot.totalH+=ph;tot.hSup+=ph-hc/7-8;}
+      else{var dh=slotH(labo)+ph;tot.totalH+=dh;tot.hSup+=dh-hc/7;var s=slotOf(labo);if(s&&(s.midi||s.soir))tot.repas+=(s.midi?1:0)+(s.soir?1:0);}
     }
   }
+  tot.totalH=Math.round(tot.totalH*100)/100;
+  tot.hSup=Math.round(tot.hSup*100)/100;
   return tot;
 }
 function weekStatsReel(wk,eid){
@@ -374,20 +381,32 @@ function weekStatsReel(wk,eid){
 }
 function getMonthStatsReel(yr,mo,eid,hc){
   var tot={totalH:0,repas:0,cp:0,am:0,ecole:0,recup:0,hSup:0};
-  var keys=Object.keys(S.ptg);
-  // Aussi prendre les semaines du planning pour les absences
   var allKeys={};
   Object.keys(S.plan).forEach(function(k){allKeys[k]=1;});
   Object.keys(S.ptg).forEach(function(k){allKeys[k]=1;});
-  Object.keys(allKeys).forEach(function(wk){
-    var pts=wk.split('-'),wy=parseInt(pts[0]),wm=parseInt(pts[1])-1;
-    if(wy===yr&&wm===mo){
-      var st=weekStatsReel(wk,eid);
-      tot.totalH+=st.totalH;tot.repas+=st.repas;tot.cp+=st.cp;
-      tot.am+=st.am;tot.ecole+=st.ecole;tot.recup+=st.recup;
-      tot.hSup+=st.totalH-hc-(st.recup*8);
+  var wks=Object.keys(allKeys);
+  for(var i=0;i<wks.length;i++){
+    var wk=wks[i],wkMon=new Date(wk+'T00:00:00');
+    for(var di=0;di<7;di++){
+      var d=new Date(wkMon);d.setDate(wkMon.getDate()+di);
+      if(d.getFullYear()!==yr||d.getMonth()!==mo)continue;
+      var ptg=(S.ptg[wk]&&S.ptg[wk][eid]&&S.ptg[wk][eid][di])||{};
+      var day=getDayW(wk,eid,di),labo=day.labo||'';
+      if(labo==='CP'){tot.cp++;tot.hSup-=hc/7;continue;}
+      if(labo==='AM'){tot.am++;tot.hSup-=hc/7;continue;}
+      if(labo==='ECOLE'){tot.ecole++;tot.hSup-=hc/7;continue;}
+      if(labo==='RECUP'){tot.recup++;tot.hSup-=hc/7+8;continue;}
+      if(ptg.arrive&&ptg.depart){
+        var h=(toMin(ptg.depart)-toMin(ptg.arrive))/60;
+        var s=slotOf(labo);
+        if(s&&s.midi)h-=1;
+        if(s&&s.soir)h-=1;
+        if(day.pd&&day.pf){var hp=(toMin(day.pf.replace('h',':'))-toMin(day.pd.replace('h',':')))/60;h+=Math.max(0,hp);}
+        if(h>0){tot.totalH+=Math.max(0,h);tot.hSup+=Math.max(0,h)-hc/7;if(s&&(s.midi||s.soir))tot.repas+=(s.midi?1:0)+(s.soir?1:0);}
+        else{tot.hSup-=hc/7;}
+      }else{tot.hSup-=hc/7;}
     }
-  });
+  }
   tot.totalH=Math.round(tot.totalH*100)/100;
   tot.hSup=Math.round(tot.hSup*100)/100;
   return tot;
